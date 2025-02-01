@@ -1,8 +1,12 @@
 import cv2
 
 from fer import FER
+import time
 
+import csv
+import numpy as np
 ## faces
+
 
 paths = [r'C:\Users\gr8jj\OneDrive\Desktop\SPRING 2025\CS497\fake_faces\neutral_face.jpg',
 r'C:\Users\gr8jj\OneDrive\Desktop\SPRING 2025\CS497\fake_faces\angry_face.jpg',
@@ -47,8 +51,8 @@ def detect_emotion(image, faces):
         faces (numpy.ndarray): coordinates of the face
 
     Returns:
-        Type: definition
-            >>> Example
+        tuple: The modified image to include analysis & a dictionary representing the top emotion.
+            >>> ([[12, 123, 543, 53, 534]], {'Passenger 1': "angry"})
 
     """
     emotions = {}
@@ -74,28 +78,103 @@ def detect_emotion(image, faces):
         cv2.rectangle(image_cv2, (x, y), (x+w, y+h), (255, 0, 0), 2)
 
         # Put text indicating the emotion on the image
-        cv2.putText(image_cv2, f"Passenger {i+1}: {emotion}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+        cv2.putText(image_cv2, f"Passenger {i+1}: {emotion}", (x, y + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.09, (36, 255, 12), 0)
 
     # Return the modified image with bounding boxes and emotion labels, along with the emotions dictionary
     return image_cv2, emotions
 
 
+def main_test():
+    print(int(time.time()), 'PRE loop')
+    for path in paths:
 
-for path in paths:
-    image = cv2.imread(path)
+        image = cv2.imread(path)
 
-    # Check if the image was loaded successfully
-    if image is None:
-        print("Error: Could not load image.")
-    else:
-        
-        face_coords = detect_faces(image)
+        # Check if the image was loaded successfully
+        if image is None:
+            print("Error: Could not load image.")
+        else:
+            face_coords = detect_faces(image)
+            response = detect_emotion(image, face_coords)
+            print(face_coords, 'fc')
+            cv2.imshow('Image', response[0])
 
-        response = detect_emotion(image, face_coords)
+            # Wait for any key to close the window
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
+    print(int(time.time()), 'POST loop')
+
+
+def second_test():
+    data = []
+    print(int(time.time()), 'PRE data')
+    ## loading and cleaning face data
+    with open(r"C:\Users\gr8jj\OneDrive\Desktop\SPRING 2025\CS497\fake_faces\fer2013.csv\fer2013.csv", mode='r', newline='', encoding='utf-8') as file:
+        file.readline()
+        reader = csv.reader(file)
+        count = 0
+        for row in reader:
+            count += 1
+
+            raw_pixels = list(map(int, row[1].split()))
+            formatted_pixels = np.array(raw_pixels, dtype=np.uint8).reshape((48, 48))
+            data.append(formatted_pixels)
+
+            if count >= 3:
+                break
+
+    print(int(time.time()), 'POST data')
+    ## analysis with face data
+    #emotions = []
+    print(int(time.time()), 'pre analysis')
+    for face in data[:61]:
+        response = detect_emotion(face, [[0, 0, 48, 48]])
         cv2.imshow('Image', response[0])
-        print(response[1])
 
         # Wait for any key to close the window
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+        #emotions.append(response[1])
+
+    print(int(time.time()), 'POST analysis')
+
+
+def process_1D_array_csv(path, size, limit=10):
+    """Process 1D arrays from a CSV to openCV formatting.
+
+    Args:
+        path (str): e.g. C:\\Users\\gr8jj\\OneDrive\\Desktop\\SPRING 2025\\CS497\\fake_faces\\fer2013.csv\\fer2013.csv
+
+        size (int): the pixel structure of the image 48 = (48 x 48), 64 = (64 x 64)
+
+        limit (int): the max number of faces to process.
+
+    Returns:
+        list: A list of np.arrays. Each array represents the pixels of an image
+
+
+    """
+    data = []
+
+    # loading and cleaning face data
+    with open(path, mode='r', newline='', encoding='utf-8') as file:
+        # instantiate csv reader object
+        file.readline()
+        reader = csv.reader(file)
+
+        count = 0
+        for row in reader:
+            count += 1
+
+            raw_pixels = list(map(int, row[1].split()))
+            formatted_pixels = np.array(raw_pixels, dtype=np.uint8).reshape((size, size))
+            data.append(formatted_pixels)
+
+            if count >= limit:
+                break
+
+    return data
+
+if __name__ == '__main__':
+    second_test()

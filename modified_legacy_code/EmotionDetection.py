@@ -1,9 +1,9 @@
 """Emotion Detection script for ZED Camera.
 
 The video is captured at 20 frames per second (fps).
-Emotions are determined per frame using the Haar cascade classifier provided by OpenCV (cv2.CascadeClassifier).
-The Haar cascade model is pre-trained by OpenCV to detect basic emotions including happiness, sadness, anger, surprise, fear, and disgust.
+Faces are determined per frame using the Haar cascade classifier provided by OpenCV (cv2.CascadeClassifier).
 This script primarily utilizes CPU for facial emotion detection, suitable for laptop use.
+The identified faces are sent to FER (MTCNN) for emotion recognition.
 
 Author: John Rosario Cruz, originally Dominic Nguyen
 Version: 1/30/2025
@@ -55,17 +55,25 @@ def detect_faces(image):
     # Return the coordinates of the detected faces (x, y, width, height)
     return faces
 
-# This function is used to detect emotion
 def detect_emotion(image, faces):
+    """Detects emotion given image n-array, and face coords.
+
+    Args:
+        image (numpy.ndarray): the image
+
+        faces (numpy.ndarray): coordinates of the face (Found in detect_faces())
+
+    Returns:
+        tuple: The modified image to include analysis & a dictionary representing the top emotion.
+            >>> ([[12, 123, 543, 53, 534]], {'Passenger 1': "angry"})
+
+    """
     # Create an empty dictionary to store emotions detected for each face. Facial emotions will be appended to this list.
     emotions = {}
     
-    # Initialize the FER (Facial Expression Recognition) detector with MTCNN (Multi-Task Cascaded Convolutional Networks) enabled
-    # Uses a special face detection method called MTCNN
+    # Initialize the FER (Facial Expression Recognition) detector with MTCNN
     # MTCNN does many things at once: finds faces, spots facial features like eyes and nose, and improves accuracy with each step
-    # It's based on special math called convolutional networks, which are great at understanding images
     # By enabling MTCNN, we're telling our detector to use this smart method for finding faces
-    #This helps us find faces accurately before figuring out their emotions
     detector = FER(mtcnn=True)
 
     # Convert the ZED image (ZED is a depth-sensing camera) to a format usable by OpenCV
@@ -91,8 +99,17 @@ def detect_emotion(image, faces):
     # Return the modified image with bounding boxes and emotion labels, along with the emotions dictionary
     return image_cv2, emotions
 
-
 def get_top_three_emotions(emotions_per_frame):
+    """Return the top three emotions per frame for a series of frames.
+    
+    Args:
+        emotions_per_frame (list): The list of emotions detected in each frame.
+    
+    Returns:
+        dict: The top emotions per passenger
+            >>> {"Passenger 1": ["angry", "sad", "happy"]}
+    
+    """
     # Initialize a dictionary to store counts of each emotion PER passenger
     passenger_emotions = defaultdict(lambda: defaultdict(int))
 

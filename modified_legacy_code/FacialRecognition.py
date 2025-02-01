@@ -63,42 +63,42 @@ def insert_face_data(name, face_embeddings, preferred_speed):
 
 
         # Loop through each result retrieved from the database
-for result in results:
-    # Load the stored face data from the database
-    db_face_embeddings = pickle.loads(result[0])
+    for result in results:
+        # Load the stored face data from the database
+        db_face_embeddings = pickle.loads(result[0])
 
-    # Compare the new face with the ones already in the database
-    # Calculate how similar they are using a measure called cosine similarity
-    similarity_score = 1 - cosine(face_embeddings, db_face_embeddings)
+        # Compare the new face with the ones already in the database
+        # Calculate how similar they are using a measure called cosine similarity
+        similarity_score = 1 - cosine(face_embeddings, db_face_embeddings)
 
-    # Check if the similarity score is higher than a set threshold
-    if similarity_score > emotion_tolerance:
-        # If it's similar enough, the face is likely already in the database
-        # Print a message indicating that the face data already exists
-        print(f"Data for {name} already exists in the database.")
-        # Stop processing further since the data doesn't need to be added again
-        return
+        # Check if the similarity score is higher than a set threshold
+        if similarity_score > emotion_tolerance:
+            # If it's similar enough, the face is likely already in the database
+            # Print a message indicating that the face data already exists
+            print(f"Data for {name} already exists in the database.")
+            # Stop processing further since the data doesn't need to be added again
+            return
 
-        # If the face is not found to be similar to any in the database, proceed with adding it
-        # Create a query to add the new face data to the database
-        query_insert_data = "INSERT INTO face_detect_live (person_name, face_encoding, preferred_speed) VALUES (%s, %s, %s)"
-        # Define the data to be added: person's name, face embeddings, and preferred speed
-        data = (name, encoded_face_embeddings, preferred_speed)
-        # Execute the query to add the data to the database
-        cursor.execute(query_insert_data, data)
-        # Save the changes made to the database
-        db_connection.commit()
-        # Print a message indicating that the data was added successfully
-        print(f"Data for {name} inserted successfully.")
+            # If the face is not found to be similar to any in the database, proceed with adding it
+            # Create a query to add the new face data to the database
+            query_insert_data = "INSERT INTO face_detect_live (person_name, face_encoding, preferred_speed) VALUES (%s, %s, %s)"
+            # Define the data to be added: person's name, face embeddings, and preferred speed
+            data = (name, encoded_face_embeddings, preferred_speed)
+            # Execute the query to add the data to the database
+            cursor.execute(query_insert_data, data)
+            # Save the changes made to the database
+            db_connection.commit()
+            # Print a message indicating that the data was added successfully
+            print(f"Data for {name} inserted successfully.")
 
-        # Close the cursor and database connection
-        cursor.close()
-        db_connection.close()
+            # Close the cursor and database connection
+            cursor.close()
+            db_connection.close()
 
-    # Handle any errors that might occur during database operations
-    except mysql.connector.Error as error:
-    # Print an error message describing the issue
-    print("Error:", error)
+        # Handle any errors that might occur during database operations
+        except mysql.connector.Error as error:
+        # Print an error message describing the issue
+        print("Error:", error)
 
 #Creates a bounding box around head of the user (TO ENSURE THE USER IS IN FRAME)
 def draw_bounding_box(frame, x, y, w, h, color):
