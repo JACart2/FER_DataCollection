@@ -5,7 +5,7 @@ Faces are determined per frame using the Haar cascade classifier provided by Ope
 This script primarily utilizes CPU for facial emotion detection, suitable for laptop use.
 The identified faces are sent to FER (MTCNN) for emotion recognition.
 
-Author: John Rosario Cruz, originally Dominic Nguyen
+Author: Dominic Nguyen, modified by John Rosario Cruz
 Version: 1/30/2025
 """
 # OpenCV Package
@@ -194,7 +194,6 @@ def main():
 
             # Write frame to video
             out.write(frame)
-
             # Display the frame
             cv2.imshow('frame', frame)
 

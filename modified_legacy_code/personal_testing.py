@@ -2,9 +2,12 @@ import cv2
 
 from fer import FER
 import time
+import datetime
 
 import csv
 import numpy as np
+import pyzed.sl as sl
+
 ## faces
 
 
@@ -30,13 +33,10 @@ def detect_faces(image):
     # load pre-trained model (haarcascade)
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-    # convert to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
     # Detect faces in the grayscale image using the detectMultiScale method of the face cascade
     # scaleFactor: Parameter specifying how much the image size is reduced at each image scale.
     # minNeighbors: Parameter specifying how many neighbors each rectangle should have to retain it.
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
+    faces = face_cascade.detectMultiScale(image, scaleFactor=1.3, minNeighbors=5)
 
     # Return the coordinates of the detected faces (x, y, width, height)
     return faces
@@ -60,13 +60,17 @@ def detect_emotion(image, faces):
     # Initialize the FER (Facial Expression Recognition) detector with MTCNN (Multi-Task Cascaded Convolutional Networks) 
     detector = FER(mtcnn=True)
 
-    # Convert the ZED image to a format usable by OpenCV
-    image_cv2 = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    # # Convert the ZED image to a format usable by OpenCV
+    # image_cv2 = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     # Iterate over each detected face
     for i, (x, y, w, h) in enumerate(faces):
         # Crop the face region from the image
-        face_img = image_cv2[y:y+h, x:x+w]
+        face_img = image[y:y+h, x:x+w]
+
+        # resize grayscale image to mimic RGB dimensionality
+        if len(face_img.shape) == 2:
+            face_img = np.repeat(face_img[..., np.newaxis], 3, axis=-1)
 
         # Detect emotion for the face using the FER detector
         emotion, _ = detector.top_emotion(face_img)
@@ -75,16 +79,16 @@ def detect_emotion(image, faces):
         emotions[f"Passenger {i+1}"] = emotion
 
         # Draw bounding box around the detected face
-        cv2.rectangle(image_cv2, (x, y), (x+w, y+h), (255, 0, 0), 2)
+        cv2.rectangle(image, (x, y), (x+w, y+h), (255, 0, 0), 2)
 
         # Put text indicating the emotion on the image
-        cv2.putText(image_cv2, f"Passenger {i+1}: {emotion}", (x, y + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.09, (36, 255, 12), 0)
+        cv2.putText(image, f"Passenger {i+1}: {emotion}", (x, y + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 0)
 
     # Return the modified image with bounding boxes and emotion labels, along with the emotions dictionary
-    return image_cv2, emotions
+    return image, emotions
 
 
-def main_test():
+def test_full_local_images():
     print(int(time.time()), 'PRE loop')
     for path in paths:
 
@@ -106,7 +110,7 @@ def main_test():
     print(int(time.time()), 'POST loop')
 
 
-def second_test():
+def test_local_csv_data():
     data = []
     print(int(time.time()), 'PRE data')
     ## loading and cleaning face data
@@ -140,7 +144,7 @@ def second_test():
     print(int(time.time()), 'POST analysis')
 
 
-def process_1D_array_csv(path, size, limit=10):
+def __process_1D_array_csv__(path, size, limit=10):
     """Process 1D arrays from a CSV to openCV formatting.
 
     Args:
@@ -176,5 +180,84 @@ def process_1D_array_csv(path, size, limit=10):
 
     return data
 
+
+
+
+
+## Testing vidoe input from ZED ##
+
+def detect_emotion_alt(image):
+    """Detects emotion given image n-array, and face coords.
+
+    Args:
+        image (numpy.ndarray): the image
+
+    Returns:
+        tuple: The modified image to include analysis & a dictionary representing the top emotion.
+            >>> ([[12, 123, 543, 53, 534]], {'Passenger 1': "angry"})
+
+    """
+    emotions = {}
+
+    # Initialize the FER (Facial Expression Recognition) detector with MTCNN (Multi-Task Cascaded Convolutional Networks) 
+    detector = FER(mtcnn=True)
+
+    # resize grayscale image to mimic RGB dimensionality
+    if len(image.shape) == 2:
+        image = np.repeat(image[..., np.newaxis], 3, axis=-1)
+
+    # Detect emotion for the faces using the FER detector
+    response = detector.detect_emotions(image)
+
+    # Store the detected emotion for the current face in the emotions dictionary
+    for i, passenger in enumerate(response):
+        confidence = 0
+        name = ""
+        for emotion in passenger['emotions']:
+            if passenger['emotions'][emotion] > confidence:
+                confidence = passenger['emotions'][emotion]
+                name = emotion
+
+        emotions[f"Passenger {i + 1}:"] = f"{name}: {confidence * 100:.2f}%"
+
+    # Return the modified image with bounding boxes and emotion labels, along with the emotions dictionary
+    return image, emotions
+
+
+# Function that processes each frame
+def frame_processing(frame):    
+    # Detect emotions for each face in the frame
+    emotion_frame, emotions = detect_emotion_alt(frame)
+
+    print(emotions)
+
+
+def test_20fps_cam_input():
+    # config cam stats
+    init_params = sl.InitParameters()
+    init_params.camera_resolution = sl.RESOLUTION.HD720  
+    init_params.camera_fps = 30
+
+    zed = sl.Camera()
+    if zed.open(init_params) != sl.ERROR_CODE.SUCCESS:
+        print("Error opening ZED camera")
+        exit(1)
+
+
+    # Continuously capture frames from the live feed
+    while True:
+        # Grab a frame
+        if zed.grab() == sl.ERROR_CODE.SUCCESS:
+            # Retrieve the left image
+            image = sl.Mat()
+            zed.retrieve_image(image, sl.VIEW.LEFT_GRAY)
+
+            # Convert to numpy array for easier handling in the test function
+            frame_data = image.get_data()
+
+            # Call the test function to process the frame
+            frame_processing(frame_data)
+
+
 if __name__ == '__main__':
-    second_test()
+    test_20fps_cam_input()
