@@ -7,7 +7,6 @@ import datetime
 import csv
 import numpy as np
 import pyzed.sl as sl
-
 ## faces
 
 
@@ -223,7 +222,6 @@ def detect_emotion_alt(image):
     # Return the modified image with bounding boxes and emotion labels, along with the emotions dictionary
     return image, emotions
 
-
 # Function that processes each frame
 def frame_processing(frame):    
     # Detect emotions for each face in the frame
@@ -255,9 +253,12 @@ def test_20fps_cam_input():
             # Convert to numpy array for easier handling in the test function
             frame_data = image.get_data()
 
+            ## implement check if there is a face, if yes, assert its there for 5 iterations, then process
+
             # Call the test function to process the frame
             frame_processing(frame_data)
 
 
 if __name__ == '__main__':
     test_20fps_cam_input()
+

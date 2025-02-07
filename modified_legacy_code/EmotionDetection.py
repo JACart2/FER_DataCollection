@@ -135,6 +135,8 @@ def get_top_three_emotions(emotions_per_frame):
 
 
 def main():
+    """Main startpoint of script.
+    """
     # Save Emotion Script Directory -- output file of emotions will be saved here.
     save_dir = r"/home/jacart/Desktop/EmotionTest"
 
