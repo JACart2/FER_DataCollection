@@ -9,6 +9,7 @@ def percentCPU():
             cpubar.n=ps.cpu_percent()
             rambar.refresh()
             cpubar.refresh()
+            sleep(0.5)
 
 percentCPU()
 
