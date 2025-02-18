@@ -1,15 +1,16 @@
 import psutil as ps
 import tqdm as tq 
+from statistics import *
 from time import sleep
 
 def percentCPU():
     with tq.tqdm(total=100, desc="cpu%", position=1) as cpubar, tq.tqdm(total=100, desc="ram%", position=0) as rambar:
         while True:
             rambar.n=ps.virtual_memory().percent
-            cpubar.n=ps.cpu_percent()
+            cpubar.n=mean(ps.cpu_percent(interval=0.1, percpu=True))
             rambar.refresh()
             cpubar.refresh()
-            sleep(0.5)
+            sleep(0.1)
 
 percentCPU()
 
