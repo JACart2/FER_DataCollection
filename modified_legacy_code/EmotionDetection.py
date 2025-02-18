@@ -134,6 +134,86 @@ def get_top_three_emotions(emotions_per_frame):
     return top_three_emotions
 
 
+## Testing vidoe input from ZED ##
+
+def detect_emotion_alt(image):
+    """Detects emotion given image n-array, and face coords.
+
+    Args:
+        image (numpy.ndarray): the image
+
+    Returns:
+        tuple: The modified image to include analysis & a dictionary representing the top emotion.
+            >>> ([[12, 123, 543, 53, 534]], {'Passenger 1': "angry"})
+
+    """
+    emotions = {}
+
+    # Initialize the FER (Facial Expression Recognition) detector with MTCNN (Multi-Task Cascaded Convolutional Networks) 
+    detector = FER(mtcnn=True)
+
+    # resize grayscale image to mimic RGB dimensionality
+    if len(image.shape) == 2:
+        image = np.repeat(image[..., np.newaxis], 3, axis=-1)
+
+    # Detect emotion for the faces using the FER detector
+    response = detector.detect_emotions(image)
+
+    # Store the detected emotion for the current face in the emotions dictionary
+    for i, passenger in enumerate(response):
+        confidence = 0
+        name = ""
+        for emotion in passenger['emotions']:
+            if passenger['emotions'][emotion] > confidence:
+                confidence = passenger['emotions'][emotion]
+                name = emotion
+
+        emotions[f"Passenger {i + 1}:"] = f"{name}: {confidence * 100:.2f}%"
+
+    # Return the modified image with bounding boxes and emotion labels, along with the emotions dictionary
+    return image, emotions
+
+# Function that processes each frame
+def frame_processing(frame):    
+    # Detect emotions for each face in the frame
+    emotion_frame, emotions = detect_emotion_alt(frame)
+
+    print(emotions)
+
+
+def test_20fps_cam_input():
+    # config cam stats
+    init_params = sl.InitParameters()
+    init_params.camera_resolution = sl.RESOLUTION.HD720  
+    init_params.camera_fps = 30
+
+    zed = sl.Camera()
+    if zed.open(init_params) != sl.ERROR_CODE.SUCCESS:
+        print("Error opening ZED camera")
+        exit(1)
+
+
+    # Continuously capture frames from the live feed
+    while True:
+        # Grab a frame
+        if zed.grab() == sl.ERROR_CODE.SUCCESS:
+            # Retrieve the left image
+            image = sl.Mat()
+            zed.retrieve_image(image, sl.VIEW.LEFT_GRAY)
+
+            # Convert to numpy array for easier handling in the test function
+            frame_data = image.get_data()
+
+            ## implement check if there is a face, if yes, assert its there for 5 iterations, then process
+
+            # Call the test function to process the frame
+            frame_processing(frame_data)
+
+
+if __name__ == '__main__':
+    test_20fps_cam_input()
+
+
 def main():
     """Main startpoint of script.
     """
