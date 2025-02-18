@@ -1,5 +1,5 @@
-import psutil as ps
-import tqdm as tq 
+import psutil as ps # type: ignore
+import tqdm as tq  # type: ignore
 from statistics import *
 from time import sleep
 
