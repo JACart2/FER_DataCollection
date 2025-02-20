@@ -226,7 +226,7 @@ def detect_emotion_alt(image):
 def frame_processing(frame):    
     # Detect emotions for each face in the frame
     emotion_frame, emotions = detect_emotion_alt(frame)
-
+    
     print(emotions)
 
 
