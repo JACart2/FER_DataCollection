@@ -5,7 +5,7 @@
 import cv2
 from fer import FER
 import os
-import pyzed.sl as sl
+from pyzed import sl
 from collections import defaultdict
 from datetime import datetime  
 
