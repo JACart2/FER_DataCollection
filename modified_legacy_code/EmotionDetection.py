@@ -1,107 +1,207 @@
-"""Emotion Detection script for ZED Camera.
+"""Emotion Recognition of input video feed using multi-threading.
 
-The video is captured at 20 frames per second (fps).
-This script primarily utilizes CPU for facial emotion detection, suitable for laptop use.
-The identified faces are sent to FER (MTCNN) for emotion recognition.
-
-Author: Dominic Nguyen
-Modified by: John Rosario Cruz
-
-Version: 1/30/2025
+Author: John Rosario Cruz
+Based off "Facial-Recognition" by: Donghao Liu
+Version: 2/20/2025
 """
-# The FER library (Facial Emotion Recognition Library) is used for emotion using MTCNN: 
-# MTCNN (Multi-Task Cascaded Convolutional Networks) is a deep learning architecture designed for face detection and alignment.
-# It consists of three stages: face detection, facial landmark localization, and face alignment.
-from fer import FER
-
 import cv2
+from threading import Thread
+import threading
+from queue import Queue
+
+from fer import FER
+from datetime import datetime
 import numpy as np
-
-# Pyzed Library is used for the init of the ZED 2i camera.
 import pyzed.sl as sl
+import time
+import copy
+import re
+
+from openai_call import call
+
+class EmotionRecognition():
+    def __init__(self):
+        # config cam stats
+        init_params = sl.InitParameters()
+        init_params.camera_resolution = sl.RESOLUTION.VGA  
+        init_params.camera_fps = 30
+
+        self.camera = sl.Camera()
+
+        if self.camera.open(init_params) != sl.ERROR_CODE.SUCCESS:
+            print("Error opening ZED camera")
+            exit(1)
+
+        # Set video frame rate and display delay
+        fps = 30
+        self.frame_delay = float(1 / fps)
+
+        # Prepare sentiment labels and data storage
+        self.emotion_data = []
+        self.detector = FER(mtcnn=True)
 
 
-def detect_emotion(image):
-    """Detects emotion given image n-array.
-
-    Args:
-        image (numpy.ndarray): the image
-
-    Returns:
-        dict: A dictionary representing the top emotion.
-            >>> {'Passenger 1': "angry"}
-
-    """
-    emotions = {}
-
-    # Initialize the FER (Facial Expression Recognition) detector with MTCNN (Multi-Task Cascaded Convolutional Networks) 
-    detector = FER(mtcnn=True)
-
-    # resize grayscale image to mimic RGB dimensionality
-    if len(image.shape) == 2:
-        image = np.repeat(image[..., np.newaxis], 3, axis=-1)
-
-    # Detect emotion for the faces using the FER detector
-    response = detector.detect_emotions(image)
-
-    # Store the detected emotion for the current face in the emotions dictionary
-    for i, passenger in enumerate(response):
-        confidence = 0
-        name = ""
-        for emotion in passenger['emotions']:
-            if passenger['emotions'][emotion] > confidence:
-                confidence = passenger['emotions'][emotion]
-                name = emotion
-
-        emotions[f"Passenger {i + 1}:"] = f"{name}: {confidence * 100:.2f}%"
-
-    # the emotions dictionary
-    return emotions
-
-def frame_processing(frame):    
-    # Detect emotions for each face in the frame
-    emotions = detect_emotion(frame)
-
-    print(emotions)
+        # Using a limited-size queue for asynchronous processing
+        self.frame_queue = Queue(maxsize=15)
+        self.secondary_queue = Queue(maxsize=15)
+        self.stop_event = threading.Event()
+        self.alert = False
 
 
-def run_main():
-    # config cam stats
-    init_params = sl.InitParameters()
-    init_params.camera_resolution = sl.RESOLUTION.HD720  
-    init_params.camera_fps = 30
+    def monitor(self, frame):
+        """Monitor the events coming from the threads.
+        
+        Returns:
+            str: The message saying ALERT ALERT ALERT
+        """
+        ## needs to catch a frame to send to openai
+        emotion_copy = copy.deepcopy(self.emotion_data)
+        self.emotion_data = []
 
-    zed = sl.Camera()
-    if zed.open(init_params) != sl.ERROR_CODE.SUCCESS:
-        print("Error opening ZED camera")
-        exit(1)
+        emotion_count = [re.match(r'(\w+):', item).group(1) for item in emotion_copy]
+
+        
+        ## find the top emotion
+        top_emotion = "neutral"
+        count = 0
+        for emotion in set(emotion_count):
+            if emotion_count.count(emotion) >= count:
+                count = emotion_count.count(emotion)
+                top_emotion = emotion
+
+        ## find average confidence of each frame of the top emotion
+        confidence = []
+        for frame in emotion_copy:
+            if top_emotion in frame:
+                confidence.append(int(frame[-3:-1]))
+        
+        ## catch no faces being seen in the array
+        if not confidence:
+            return
+        
+        average_confidence = int(sum(confidence)/len(confidence))
+
+        print(top_emotion)
+        print(average_confidence)
+        ## lowering this number will increase chatgpt calls
+        if average_confidence >= 60:
+            if top_emotion in ["fear", "sad", "surprise", "angry", "disgust"]:
+                print(call(frame))
+                self.alert = not self.alert
+        
+
+    def process_frames(self):
+        """Primary thread for processing frames from frame queue from main.
+        """
+        while not self.stop_event.is_set():
+
+            emotions = {}
+            frame = self.frame_queue.get()
+            
+            response = self.detector.detect_emotions(frame)
+            # Store the detected emotion for the current face in the emotions dictionary
+            for i, passenger in enumerate(response):
+                confidence = 0
+                name = ""
+                for emotion in passenger['emotions']:
+                    if passenger['emotions'][emotion] > confidence:
+                        confidence = passenger['emotions'][emotion]
+                        name = emotion
+
+                emotions[f"Passenger {i + 1}:"] = f"{name}: {int(confidence * 100)}%"
+
+            if emotions:
+                self.emotion_data.append(emotions['Passenger 1:'])
+            
+
+    def secondary_process_frames(self):
+        """Secondary thread with queue to process frames from main.
+        """
+        while not self.stop_event.is_set():
+            emotions = {}
+            frame = self.secondary_queue.get()
+            
+            response = self.detector.detect_emotions(frame)
+            # Store the detected emotion for the current face in the emotions dictionary
+            for i, passenger in enumerate(response):
+                confidence = 0
+                name = ""
+                for emotion in passenger['emotions']:
+                    if passenger['emotions'][emotion] > confidence:
+                        confidence = passenger['emotions'][emotion]
+                        name = emotion
+
+                emotions[f"Passenger {i + 1}:"] = f"{name}: {int(confidence * 100)}%"
+            
+            if emotions:
+                self.emotion_data.append(emotions['Passenger 1:'])
 
 
-    # Continuously capture frames from the live feed
-    while True:
-        # Grab a frame
-        if zed.grab() == sl.ERROR_CODE.SUCCESS:
-            # Retrieve the left image
-            image = sl.Mat()
-            zed.retrieve_image(image, sl.VIEW.LEFT_GRAY)
+    def main(self):
+        # Start the thread that processes the frame
+        thread_process = Thread(target=self.process_frames, daemon=True)
+        secondary_thread_process = Thread(target=self.secondary_process_frames, daemon=True)
+        thread_process.start()
+        secondary_thread_process.start()
 
-            # Convert to numpy array for easier handling in the test function
-            frame_data_raw = image.get_data()
+        # main loop
+        times = [datetime.now().timestamp()]
+        primary = True
 
-            ## potential improvement
-            """
-            # Converts the frames to greyscale and equalizes to improve accuracy
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            equalizedFrame = cv2.equalizeHist(gray)
-            processedFrame = cv2.cvtColor(equalizedFrame, cv2.COLOR_GRAY2BGR)
-            """
+        try:
+            frame_count = 0
+            while not self.alert:
+                # Grab a frame
+                if self.camera.grab() == sl.ERROR_CODE.SUCCESS:
+                    # Retrieve the left image
+                    image = sl.Mat()
+                    self.camera.retrieve_image(image, sl.VIEW.LEFT)
 
-            ## implement check if there is a face, if yes, assert its there for 5 iterations, then process
-            ## using deepface
+                    # Convert to numpy array for easier handling in the test function
+                    frame = image.get_data()[:, :, :3]
 
-            # Call the test function to process the frame
-            frame_processing(frame_data_raw)
+                    if primary:
+                        if not self.frame_queue.full():
+                            self.frame_queue.put(frame)
+                        else:
+                            _ = self.frame_queue.get()  # discard oldest frame
+                            self.secondary_queue.put(frame)
+                    else:
+                        if not self.secondary_queue.full():
+                            self.secondary_queue.put(frame)
+                        else:
+                            _ = self.secondary_queue.get()  # discard oldest frame
+                            self.frame_queue.put(frame)
+                    
+                    primary = not primary
+
+                # monitor every 30 frames (3-4 seconds)
+                if frame_count >= 30:
+                    frame_count = 0
+                    self.monitor(frame)
+                else:
+                    frame_count += 1
+
+                time.sleep(self.frame_delay)
+
+        except KeyboardInterrupt:
+            ## catch ctrl-c to close threads
+            pass
+
+        times.append(datetime.now().timestamp())
+
+        # Notification thread ends
+        self.stop_event.set()
+
+        # Wait for thread to end
+        thread_process.join()
+        secondary_thread_process.join()
+
+        # Clean and save data
+        cv2.destroyAllWindows()
+        self.camera.close()
 
 
 if __name__ == '__main__':
-    run_main()
+    EmotionRecognitionObject = EmotionRecognition()
+    EmotionRecognitionObject.main()
