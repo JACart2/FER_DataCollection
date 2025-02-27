@@ -1,16 +1,17 @@
 import hashlib
+from argon2 import PasswordHasher
 
-# Add auth0 to presentation for next sprint
 # Implement mysql password comparison
-def hashPassword(password):
-    convert_to_bytes = str.encode(password)
+def hashPassword(password_input):
+    ph = PasswordHasher()
+    hash_password = ph.hash(password=password_input)
+    print("The password is now hashed as: ", hash_password)
+    temp_password = "Test"
+    
+    try:
+        ph.verify(hash_password, temp_password)
+        print("They are the same")
+    except:
+        print("Passwords are different")
 
-    hash_password = hashlib.sha256()
-    hash_password.update(convert_to_bytes)
-    print(hash_password.digest())
-    # test if they are the same password
-    # m = hashlib.sha256()
-    # m.update(b"this is a test run")
-    # print(m.digest())
-
-    return hash_password.digest()
+    return hash_password

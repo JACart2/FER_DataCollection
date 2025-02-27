@@ -26,7 +26,7 @@ from threading import Thread
 def extract_face_embeddings(frame):
     # Uses deepface/opencv library to detect faces.
     # Uses facenet model.
-    result = DeepFace.represent(img_path=frame, model_name='Facenet', enforce_detection=True)
+    result = DeepFace.represent(img_path=frame, model_name='Facenet')
     face_embeddings = result[0]['embedding'] if isinstance(result, list) else result['embedding']
     return face_embeddings
 
