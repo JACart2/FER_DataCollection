@@ -74,9 +74,9 @@ class EmotionRecognition():
 
         ## find average confidence of each frame of the top emotion
         confidence = []
-        for frame in emotion_copy:
-            if top_emotion in frame:
-                confidence.append(int(frame[-3:-1]))
+        for emotion in emotion_copy:
+            if top_emotion in emotion:
+                confidence.append(int(emotion[-3:-1]))
         
         ## catch no faces being seen in the array
         if not confidence:
@@ -115,7 +115,7 @@ class EmotionRecognition():
 
             if emotions:
                 self.emotion_data.append(emotions['Passenger 1:'])
-                print(emotions, "PRIMARY thread")
+                #print(emotions, "PRIMARY thread")
             
 
     def secondary_process_frames(self):
@@ -139,7 +139,7 @@ class EmotionRecognition():
             
             if emotions:
                 self.emotion_data.append(emotions['Passenger 1:'])
-                print(emotions, "SECONDARY thread")
+                #print(emotions, "SECONDARY thread")
 
 
     def main(self):
@@ -165,6 +165,7 @@ class EmotionRecognition():
                     # Convert to numpy array for easier handling in the test function
                     frame = image.get_data()[:, :, :3]
 
+                    ## alternating between threads
                     if primary:
                         if not self.frame_queue.full():
                             self.frame_queue.put(frame)
@@ -183,7 +184,7 @@ class EmotionRecognition():
                 # monitor every 30 frames (3-4 seconds)
                 if frame_count >= 30:
                     frame_count = 0
-                    #self.monitor(frame)
+                    self.monitor(frame)
                 else:
                     frame_count += 1
 

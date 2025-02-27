@@ -5,39 +5,67 @@ Version: 2/20/2025
 """
 from openai import OpenAI
 
-def call(frame):
-    ## sample openAI call
-    # prob 4o
+from io import BytesIO
+from PIL import Image
+import base64
 
-    """
+## REQUIRES dev acc info
+# client = OpenAI()
+"""
     client = OpenAI(
-        # This is the default and can be omitted
         api_key=openai_secret
     )
+"""
 
-    chat_completion = client.chat.completions.create(
-        messages=[
-            {
-                "role": "developer",
-                "content": "You are an assistant for a business owner helping derive insight from their online reviews."
-                },
-            {
-                "role": "user",
-                "content": prompt,
-                }
-        ],
-        model="gpt-4o-mini",
-        max_tokens=2000,
-        top_p=0.5,
-        frequency_penalty=1,
-        presence_penalty=1
-    )
-
-    ## https://platform.openai.com/docs/api-reference/chat/object 
-    response_string = chat_completion.choices[0].message.content
-
-    return response_string
+def encode_image(image_tensor):
+    """Take the image tensor (taken from the ZED camera), and base64 encode it so it can be passed to the OpenAI API.
+    
+    Args:
+        image_tensor (np matrix): The image matrix.
+    
+    Returns:
+        str: the encoded image
+    
     """
+    # Convert the numpy array (image tensor) to a PIL Image
+    image = Image.fromarray(image_tensor)
+    
+    # Create a BytesIO object to save the image as bytes
+    buffered = BytesIO()
+    image.save(buffered, format="PNG")  # You can change the format if needed (e.g., JPEG)
+    
+    # Get the byte data from the buffer
+    img_byte_array = buffered.getvalue()
+    
+    # Encode the byte data to base64
+    img_base64 = base64.b64encode(img_byte_array).decode('utf-8')
+    
+    return img_base64
+
+def call(frame):
+    # Getting the Base64 string
+    base64_image = encode_image(frame)
+    print(base64_image)
+    return
+    # response = client.chat.completions.create(
+    #     model="gpt-4o-mini",
+    #     messages=[
+    #         {
+    #             "role": "user",
+    #             "content": [
+    #                 {
+    #                     "type": "text",
+    #                     "text": "What is in this image?",
+    #                 },
+    #                 {
+    #                     "type": "image_url",
+    #                     "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+    #                 },
+    #             ],
+    #         }
+    #     ],
+    # )
+    
     print("Frame recieved!")
     return "ALERT ALERT ALERT"
 
