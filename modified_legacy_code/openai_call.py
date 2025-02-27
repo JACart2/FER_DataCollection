@@ -5,7 +5,7 @@ Version: 2/20/2025
 """
 from openai import OpenAI
 
-def call():
+def call(frame):
     ## sample openAI call
     # prob 4o
 
@@ -38,8 +38,8 @@ def call():
 
     return response_string
     """
-
-    return "Demo Photos Woohoo!"
+    print("Frame recieved!")
+    return "ALERT ALERT ALERT"
 
 if __name__ == '__main__':
     call()

@@ -51,6 +51,9 @@ class EmotionRecognition():
     def monitor(self, frame):
         """Monitor the events coming from the threads.
         
+        Args:
+            frame (np matrix): The frame tensor representing the image.
+
         Returns:
             str: The message saying ALERT ALERT ALERT
         """
@@ -112,6 +115,7 @@ class EmotionRecognition():
 
             if emotions:
                 self.emotion_data.append(emotions['Passenger 1:'])
+                print(emotions, "PRIMARY thread")
             
 
     def secondary_process_frames(self):
@@ -135,6 +139,7 @@ class EmotionRecognition():
             
             if emotions:
                 self.emotion_data.append(emotions['Passenger 1:'])
+                print(emotions, "SECONDARY thread")
 
 
     def main(self):
@@ -178,7 +183,7 @@ class EmotionRecognition():
                 # monitor every 30 frames (3-4 seconds)
                 if frame_count >= 30:
                     frame_count = 0
-                    self.monitor(frame)
+                    #self.monitor(frame)
                 else:
                     frame_count += 1
 
