@@ -1,6 +1,8 @@
 import cv2
 from datetime import datetime
 import time  # Import time module to track elapsed time
+# Pyzed Library is used for the init of the ZED 2i camera.
+import pyzed.sl as sl
 
 # Load the pre-trained face and body detection models
 # These models help detect faces and bodies in the video stream.
@@ -22,14 +24,19 @@ box_y = (frame_height - box_height) // 2  # Center the box vertically
 # A log file is opened to record the times when faces/bodies are detected outside the box.
 log_file = open("body_face_out_of_frame_log.txt", "a")
 
-# Start capturing video
-# The video capture object (cap) is initialized to capture frames from the default webcam (0).
-cap = cv2.VideoCapture(0)
+# Create ZED camera object and open it. Initializes ZED Camera (works for ZED 2i)
+init_params = sl.InitParameters()
+init_params.camera_resolution = sl.RESOLUTION.HD720
+init_params.camera_fps = 30
 
-# Set video resolution to a higher value to detect distant objects better
-# The resolution is set to 1280x720 to capture higher quality video for better detection at greater distances.
-cap.set(3, 1280)  # Set width
-cap.set(4, 720)   # Set height
+camera = sl.Camera()
+
+if camera.open(init_params) != sl.ERROR_CODE.SUCCESS:
+    print("Error opening ZED camera")
+    exit(1)
+
+
+runtime = sl.RuntimeParameters()
 
 # Timer variables
 # Track the last time a face was detected and set the duration to wait for no face (in seconds).
@@ -37,15 +44,15 @@ last_face_time = time.time()  # Track the last time a face was detected
 no_face_detected_duration = 4 # Duration to wait for no face (in seconds)
 
 while True:
-    # Capture frame-by-frame
-    # Capture a frame from the video feed.
-    ret, frame = cap.read()
 
-    # Check if the frame is valid
-    # If the frame is empty or invalid, skip to the next frame.
-    if frame is None or frame.size == 0:
-        print("Empty frame detected, skipping analysis.")
-        continue
+    # Grab a frame
+    if camera.grab() == sl.ERROR_CODE.SUCCESS:
+        # Retrieve the left image
+        image = sl.Mat()
+        camera.retrieve_image(image, sl.VIEW.LEFT)
+
+        # Convert to numpy array for easier handling in the test function
+        frame = image.get_data()[:, :, :3]
 
     # Resize frame for consistent detection
     # Resize the frame to the defined resolution (640x480) to maintain consistent detection performance.
@@ -131,7 +138,7 @@ while True:
 
 # Release the capture and close all windows
 # Release the video capture object and close all OpenCV windows.
-cap.release()
+camera.close()
 cv2.destroyAllWindows()
 
 # Close the log file
