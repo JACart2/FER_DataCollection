@@ -1,15 +1,13 @@
-"""Emotion Detection script for ZED Camera.
-
-The video is captured at 30 frames per second (fps).
-Faces are determined per frame using the Haar cascade classifier provided by OpenCV (cv2.CascadeClassifier).
-This script primarily utilizes CPU for facial emotion detection, suitable for laptop use.
-The identified faces are sent to FER (MTCNN) for emotion recognition.
-
-Author: Dominic Nguyen, modified by John Rosario Cruz
-Version: 1/30/2025
-"""
-# OpenCV Package
+# Facial Emotion Detection Script
+# Author: Dominic Nguyen
+# Version: 5
+# Date: 04/09/2024
 import cv2
+from fer import FER
+import os
+from pyzed import sl
+from collections import defaultdict
+from datetime import datetime  
 
 # The FER library (Facial Emotion Recognition Library) is used for emotion using MTCNN: 
 # MTCNN (Multi-Task Cascaded Convolutional Networks) is a deep learning architecture designed for face detection and alignment.
