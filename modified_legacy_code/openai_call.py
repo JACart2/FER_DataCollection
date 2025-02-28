@@ -9,6 +9,8 @@ from io import BytesIO
 from PIL import Image
 import base64
 
+import sys
+
 ## REQUIRES dev acc info
 # client = OpenAI()
 """
@@ -36,17 +38,21 @@ def encode_image(image_tensor):
     
     # Get the byte data from the buffer
     img_byte_array = buffered.getvalue()
-    
-    # Encode the byte data to base64
+
+    # Encode image to base64
     img_base64 = base64.b64encode(img_byte_array).decode('utf-8')
-    
+
     return img_base64
 
 def call(frame):
     # Getting the Base64 string
     base64_image = encode_image(frame)
-    print(base64_image)
-    return
+
+    ## use this to verify the base64 encoded image works
+    # with open('image_base64.txt', 'w') as f:
+    #     f.write(base64_image)
+    # print("Base64 string written to image_base64.txt")
+
     # response = client.chat.completions.create(
     #     model="gpt-4o-mini",
     #     messages=[

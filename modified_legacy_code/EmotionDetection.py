@@ -23,7 +23,7 @@ class EmotionRecognition():
     def __init__(self):
         # config cam stats
         init_params = sl.InitParameters()
-        init_params.camera_resolution = sl.RESOLUTION.VGA  
+        init_params.camera_resolution = sl.RESOLUTION.VGA 
         init_params.camera_fps = 30
 
         self.camera = sl.Camera()
@@ -100,7 +100,6 @@ class EmotionRecognition():
 
             emotions = {}
             frame = self.frame_queue.get()
-            
             response = self.detector.detect_emotions(frame)
             # Store the detected emotion for the current face in the emotions dictionary
             for i, passenger in enumerate(response):
@@ -124,8 +123,9 @@ class EmotionRecognition():
         while not self.stop_event.is_set():
             emotions = {}
             frame = self.secondary_queue.get()
-            
             response = self.detector.detect_emotions(frame)
+
+
             # Store the detected emotion for the current face in the emotions dictionary
             for i, passenger in enumerate(response):
                 confidence = 0
@@ -164,19 +164,16 @@ class EmotionRecognition():
 
                     # Convert to numpy array for easier handling in the test function
                     frame = image.get_data()[:, :, :3]
-
                     ## alternating between threads
                     if primary:
                         if not self.frame_queue.full():
                             self.frame_queue.put(frame)
                         else:
-                            _ = self.frame_queue.get()  # discard oldest frame
                             self.secondary_queue.put(frame)
                     else:
                         if not self.secondary_queue.full():
                             self.secondary_queue.put(frame)
                         else:
-                            _ = self.secondary_queue.get()  # discard oldest frame
                             self.frame_queue.put(frame)
                     
                     primary = not primary
