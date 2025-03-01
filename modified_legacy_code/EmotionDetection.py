@@ -4,20 +4,19 @@ Author: John Rosario Cruz
 Based off "Facial-Recognition" by: Donghao Liu
 Version: 2/20/2025
 """
-import cv2
 from threading import Thread
 import threading
 from queue import Queue
 
 from fer import FER
 from datetime import datetime
-import numpy as np
 import pyzed.sl as sl
 import time
 import copy
 import re
 
 from openai_call import call
+
 
 class EmotionRecognition():
     def __init__(self):
@@ -40,17 +39,15 @@ class EmotionRecognition():
         self.emotion_data = []
         self.detector = FER(mtcnn=True)
 
-
         # Using a limited-size queue for asynchronous processing
         self.frame_queue = Queue(maxsize=15)
         self.secondary_queue = Queue(maxsize=15)
         self.stop_event = threading.Event()
         self.alert = False
 
-
     def monitor(self, frame):
         """Monitor the events coming from the threads.
-        
+
         Args:
             frame (np matrix): The frame tensor representing the image.
 
@@ -63,7 +60,6 @@ class EmotionRecognition():
 
         emotion_count = [re.match(r'(\w+):', item).group(1) for item in emotion_copy]
 
-        
         ## find the top emotion
         top_emotion = "neutral"
         count = 0
@@ -77,11 +73,11 @@ class EmotionRecognition():
         for emotion in emotion_copy:
             if top_emotion in emotion:
                 confidence.append(int(emotion[-3:-1]))
-        
+
         ## catch no faces being seen in the array
         if not confidence:
             return
-        
+
         average_confidence = int(sum(confidence)/len(confidence))
 
         print(top_emotion)
@@ -91,7 +87,6 @@ class EmotionRecognition():
             if top_emotion in ["fear", "sad", "surprise", "angry", "disgust"]:
                 print(call(frame))
                 self.alert = not self.alert
-        
 
     def process_frames(self):
         """Primary thread for processing frames from frame queue from main.
@@ -115,7 +110,6 @@ class EmotionRecognition():
             if emotions:
                 self.emotion_data.append(emotions['Passenger 1:'])
                 #print(emotions, "PRIMARY thread")
-            
 
     def secondary_process_frames(self):
         """Secondary thread with queue to process frames from main.
@@ -140,7 +134,6 @@ class EmotionRecognition():
             if emotions:
                 self.emotion_data.append(emotions['Passenger 1:'])
                 #print(emotions, "SECONDARY thread")
-
 
     def main(self):
         # Start the thread that processes the frame
@@ -201,7 +194,6 @@ class EmotionRecognition():
         secondary_thread_process.join()
 
         # Clean and save data
-        cv2.destroyAllWindows()
         self.camera.close()
 
 
