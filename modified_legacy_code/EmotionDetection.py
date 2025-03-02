@@ -2,7 +2,8 @@
 
 Author: John Rosario Cruz
 Based off "Facial-Recognition" by: Donghao Liu
-Version: 2/20/2025
+Based off "FaceRec_Emotion" by: Dominic Nguyen
+Version: 3/02/2025
 """
 from threading import Thread
 import threading
@@ -50,9 +51,6 @@ class EmotionRecognition():
 
         Args:
             frame (np matrix): The frame tensor representing the image.
-
-        Returns:
-            str: The message saying ALERT ALERT ALERT
         """
         ## needs to catch a frame to send to openai
         emotion_copy = copy.deepcopy(self.emotion_data)
@@ -136,6 +134,9 @@ class EmotionRecognition():
                 #print(emotions, "SECONDARY thread")
 
     def main(self):
+        """Main callpoint of class. Begins threads, initializes queues, and periodically calls monitor to assess
+        the user.
+        """
         # Start the thread that processes the frame
         thread_process = Thread(target=self.process_frames, daemon=True)
         secondary_thread_process = Thread(target=self.secondary_process_frames, daemon=True)

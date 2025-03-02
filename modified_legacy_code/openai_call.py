@@ -41,6 +41,19 @@ def encode_image(image_tensor):
     return img_base64
 
 def call(frame):
+    """Calls ChatGPT to make a determination on the image of the person.
+    
+    Args:
+        frame (np.matrix): The image represented by a matrix
+    
+    Returns:
+        str: A response from chatGPT (U, I, N, or F)
+            >>> U = Unconscious
+            >>> I = Incapacitated
+            >>> N = Neither
+            >>> F = Failure to identify
+    
+    """
     # Getting the Base64 string
     base64_image = encode_image(frame)
 
