@@ -10,13 +10,15 @@ import threading
 from queue import Queue
 
 from fer import FER
-from datetime import datetime
 import pyzed.sl as sl
+
+from datetime import datetime
 import time
 import copy
 import re
 
-from openai_call import call
+from openai_call import call_openai
+from ross_slowdown import call_ross
 
 
 class EmotionRecognition():
@@ -68,6 +70,7 @@ class EmotionRecognition():
             Main callpoint of class. Begins threads, initializes queues, and periodically calls monitor to assess the user.
     
     """
+    
     def __init__(self):
         # config cam stats
         init_params = sl.InitParameters()
@@ -97,6 +100,7 @@ class EmotionRecognition():
     def trigger_stop(self):
         """Trigger to HCI/Backend (or ROSS) for slowing down and stopping the cart.
         """
+        call_ross()
         print('Stop-Process: Called')
 
     def trigger_admin_alert(self):
@@ -146,7 +150,7 @@ class EmotionRecognition():
         ## lowering this number will increase chatgpt calls
         if average_confidence >= 65:
             if top_emotion in ["fear", "sad", "surprise", "angry", "disgust"]:
-                response = call(frame)
+                response = call_openai(frame)
                 self.trigger_user_prompt()
                 if response in ['U', 'I']:
                     self.trigger_stop()

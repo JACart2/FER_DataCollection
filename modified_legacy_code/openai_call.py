@@ -40,7 +40,7 @@ def encode_image(image_tensor):
 
     return img_base64
 
-def call(frame):
+def call_openai(frame):
     """Calls ChatGPT to make a determination on the image of the person.
     
     Args:
