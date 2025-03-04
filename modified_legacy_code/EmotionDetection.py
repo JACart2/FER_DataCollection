@@ -20,6 +20,54 @@ from openai_call import call
 
 
 class EmotionRecognition():
+    """
+    Description
+    ------------
+        Script for monitoring passenger emotions through a ZED camera. Also includes 
+        trigger methods for causing actions in the cart if needed.
+    
+    Attributes
+    ----------
+        camera (obj): The object that interacts with the ZED camera.
+
+        frame_delay (float): The time in seconds that the main loop will wait to keep time with ZED FPS.
+
+        emotion_data (list): Stores emotion data for up to 30 frames.
+
+        detector (obj): The FER detector. Used to detect emotion & faces in frames.
+
+        frame_queue (queue): The first queue of frames coming from the ZED camera.
+        
+        secondary_queue (queue): The second queue of frames coming from the ZED camera.
+
+        stop_event (boolean): Forces the threads to begin termination.
+
+        alert (boolean): Forces the main loop to terminate (starting the process for killing threads)
+
+    Methods:
+    -------
+        trigger_stop()
+            Trigger to HCI/Backend (or ROSS) for slowing down and stopping the cart.
+
+        trigger_admin_alert()
+            Trigger to HCI/Backend for alerting the admin to check on a passenger/cart.
+
+        trigger_user_prompt()
+            Trigger to HCI/Backend for prompting the user if they are okay.
+
+        monitor()
+            Analyze and clear all emotions in emotion_data to determine if openai call is required.
+
+        process_frames()
+            Primary thread for processing frames from frame queue from main.
+
+        secondary_process_frames()
+            Secondary thread with queue to process frames from main.
+        
+        main()
+            Main callpoint of class. Begins threads, initializes queues, and periodically calls monitor to assess the user.
+    
+    """
     def __init__(self):
         # config cam stats
         init_params = sl.InitParameters()
@@ -45,6 +93,21 @@ class EmotionRecognition():
         self.secondary_queue = Queue(maxsize=15)
         self.stop_event = threading.Event()
         self.alert = False
+
+    def trigger_stop(self):
+        """Trigger to HCI/Backend (or ROSS) for slowing down and stopping the cart.
+        """
+        print('Stop-Process: Called')
+
+    def trigger_admin_alert(self):
+        """Trigger to HCI/Backend for alerting the admin to check on a passenger/cart.
+        """
+        print('Admin-Alert-Process: Called')
+
+    def trigger_user_prompt(self):
+        """Trigger to HCI/Backend for prompting the user if they are okay.
+        """
+        print('User-Prompt-Process: Called')
 
     def monitor(self, frame):
         """Monitor the events coming from the threads.
@@ -78,13 +141,19 @@ class EmotionRecognition():
 
         average_confidence = int(sum(confidence)/len(confidence))
 
-        print(top_emotion)
-        print(average_confidence)
+        #print(top_emotion)
+        #print(average_confidence)
         ## lowering this number will increase chatgpt calls
-        if average_confidence >= 60:
+        if average_confidence >= 65:
             if top_emotion in ["fear", "sad", "surprise", "angry", "disgust"]:
-                print(call(frame))
-                self.alert = not self.alert
+                response = call(frame)
+                self.trigger_user_prompt()
+                if response in ['U', 'I']:
+                    self.trigger_stop()
+                    self.trigger_admin_alert()
+
+                ## optional kill switch for script V
+                #self.alert = not self.alert
 
     def process_frames(self):
         """Primary thread for processing frames from frame queue from main.

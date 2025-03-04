@@ -1,7 +1,7 @@
 """OpenAI call point for other functions.
 
 Author: John Rosario Cruz
-Version: 2/20/2025
+Version: 3/3/2025
 """
 from openai import OpenAI
 from io import BytesIO
@@ -10,9 +10,9 @@ import base64
 
 
 ## REQUIRES dev acc info
-# client = OpenAI(
-#     api_key=secret_key
-# )
+client = OpenAI(
+    api_key="secret_key"
+)
 
 
 def encode_image(image_tensor):
@@ -67,10 +67,10 @@ def call(frame):
     Return only a single letter (U, I, N, or F) as a response, dont include extra text.
     """
 
-    ## use this to verify the base64 encoded image works
-    with open('image_base64.txt', 'w') as f:
-        f.write(base64_image)
-    print("Base64 string written to image_base64.txt")
+    # ## use this to verify the base64 encoded image works
+    # with open('image_base64.txt', 'w') as f:
+    #     f.write(base64_image)
+    # print("Base64 string written to image_base64.txt")
 
     response = client.chat.completions.create(
         model="chatgpt-4o-latest",
@@ -91,10 +91,8 @@ def call(frame):
         ],
     )
 
-    print(response.choices)
     
-    print("Frame recieved!")
-    return "ALERT ALERT ALERT"
+    return response.choices[0]
 
 if __name__ == '__main__':
-    call(frame)
+    pass
