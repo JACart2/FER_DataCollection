@@ -150,7 +150,8 @@ class EmotionRecognition():
         ## lowering this number will increase chatgpt calls
         if average_confidence >= 65:
             if top_emotion in ["fear", "sad", "surprise", "angry", "disgust"]:
-                response = call_openai(frame)
+                #response = call_openai(frame)
+                response = 'U'
                 self.trigger_user_prompt()
                 if response in ['U', 'I']:
                     self.trigger_stop()
