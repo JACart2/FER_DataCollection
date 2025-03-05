@@ -5,6 +5,9 @@ Code repo for developing facial expression recognition for the AV (cart).
 
 # Required Dependencies
 - [FER](https://pypi.org/project/fer/): Primary package for identifying faces and emotions.
+- [TensorFlow](https://pypi.org/project/tensorflow/): Dependency for FER.
+- [ffmpeg](https://pypi.org/project/ffmpeg/): Dependency for FER.
+- [moviepy](https://pypi.org/project/moviepy/): Dependency for FER.
 - [ZED SDK](https://www.stereolabs.com/developers/release): The SDK install.
 - [PyZed API](https://github.com/stereolabs/zed-python-api): Dependencies: ZED SDK (see above), python3-dev, python3-pip, opencv-python, pyopengl, cython, numpy => Linux: script @ /usr/local/zed/
 
