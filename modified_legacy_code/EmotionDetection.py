@@ -145,8 +145,8 @@ class EmotionRecognition():
 
         average_confidence = int(sum(confidence)/len(confidence))
 
-        #print(top_emotion)
-        #print(average_confidence)
+        print(top_emotion)
+        print(average_confidence)
         ## lowering this number will increase chatgpt calls
         if average_confidence >= 65:
             if top_emotion in ["fear", "sad", "surprise", "angry", "disgust"]:
