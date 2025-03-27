@@ -54,6 +54,9 @@ RUN cd /usr/local/zed/ && \
 ENV NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
 ENV NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPABILITIES,}graphics,compute,video,utility
 
+# code specific values
+ENV OA_SECRET=${OA_SECRET:-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}
+ENV SERIAL_NUMBER=${SERIAL_NUMBER:-31061594}
 
 WORKDIR /src
 
@@ -61,4 +64,3 @@ RUN git clone https://github.com/JACart2/FER_DataCollection.git
 
 RUN cd FER_DataCollection && \
     git pull
-

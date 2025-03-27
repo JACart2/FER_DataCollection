@@ -7,11 +7,12 @@ from openai import OpenAI
 from io import BytesIO
 from PIL import Image
 import base64
+import os
 
 
 ## REQUIRES dev acc info
 client = OpenAI(
-    api_key="secret_key"
+    api_key=os.environ.get("OA_SECRET")
 )
 
 

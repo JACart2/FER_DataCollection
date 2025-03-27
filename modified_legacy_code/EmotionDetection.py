@@ -16,6 +16,7 @@ from datetime import datetime
 import time
 import copy
 import re
+import os
 
 from openai_call import call_openai
 from ross_slowdown import call_ross
@@ -76,6 +77,9 @@ class EmotionRecognition():
         init_params = sl.InitParameters()
         init_params.camera_resolution = sl.RESOLUTION.VGA 
         init_params.camera_fps = 30
+        ## hard-coded value to the serial code of the back camera
+        ## see the ENV var in the docker image 
+        init_params.set_from_serial_number(os.environ.get("SERIAL_NUMBER"))
 
         self.camera = sl.Camera()
 
@@ -145,8 +149,8 @@ class EmotionRecognition():
 
         average_confidence = int(sum(confidence)/len(confidence))
 
-        #print(top_emotion)
-        #print(average_confidence)
+        print(top_emotion)
+        print(average_confidence)
         ## lowering this number will increase chatgpt calls
         if average_confidence >= 65:
             if top_emotion in ["fear", "sad", "surprise", "angry", "disgust"]:
