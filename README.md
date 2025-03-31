@@ -1,7 +1,10 @@
-2/27/2025
+3/29/2025
 
 # FER_DataCollection
 Code repo for developing facial expression recognition for the AV (cart).
+
+# DockerHub Repo
+- [DockerHub](https://hub.docker.com/repository/docker/jmujacart/jacart_images/general) Storing project images.
 
 # Required Dependencies
 - [FER](https://pypi.org/project/fer/): Primary package for identifying faces and emotions.
@@ -15,7 +18,7 @@ Code repo for developing facial expression recognition for the AV (cart).
 - [DotEnv](https://pypi.org/project/python-dotenv/): Used for loading environment variables. Primarily helps in development.
 
 # ./legacy_code
-This is original code from Dominic Nguyen from Spring 23'. This is not used for the cart, it is just the basis that everything else was developed on.
+This is original code from Dominic Nguyen from Spring 24'. This is not used for the cart, it is just the basis that everything else was developed on.
 
 # ./modified_legacy_code
 EmotionDetection, FacialRecognition (Auth), PostureRecognition (OoB & skeleton tracking)
