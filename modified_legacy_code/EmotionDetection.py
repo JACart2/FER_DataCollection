@@ -130,17 +130,14 @@ class EmotionRecognition():
 
         print('')
         print(len(emotion_copy), 'emotion_copy')
-        print('')
 
         print('')
         print(len(self.emotion_data), 'emotion_data')
-        print('')
 
         emotion_count = [re.match(r'(\w+):', item).group(1) for item in emotion_copy]
 
         print('')
         print(emotion_count, 'emotion_count')
-        print('')
         ## find the top emotion
         top_emotion = "neutral"
         count = 0
@@ -151,7 +148,6 @@ class EmotionRecognition():
 
         print('')
         print(top_emotion, 'top_emotion')
-        print('')
 
         ## find average confidence of each frame of the top emotion
         confidence = []
@@ -269,7 +265,7 @@ class EmotionRecognition():
                     primary = not primary
 
                 # monitor every 30 frames (3-4 seconds)
-                if frame_count >= 30:
+                if len(self.emotion_data) >= 30:
                     frame_count = 0
                     self.monitor(frame)
                 else:
