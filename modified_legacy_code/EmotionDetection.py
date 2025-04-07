@@ -79,7 +79,7 @@ class EmotionRecognition():
         init_params.camera_fps = 30
         ## hard-coded value to the serial code of the back camera
         ## see the ENV var in the docker image 
-        init_params.set_from_serial_number(int(os.environ.get("SERIAL_NUMBER")))
+        ## init_params.set_from_serial_number(int(os.environ.get("SERIAL_NUMBER")))
         init_params.camera_image_flip = sl.FLIP_MODE.ON
 
         self.camera = sl.Camera()
