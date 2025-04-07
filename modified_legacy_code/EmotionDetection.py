@@ -128,8 +128,19 @@ class EmotionRecognition():
         emotion_copy = copy.deepcopy(self.emotion_data)
         self.emotion_data = []
 
+        print('')
+        print(len(emotion_copy), 'emotion_copy')
+        print('')
+
+        print('')
+        print(len(self.emotion_data), 'emotion_data')
+        print('')
+
         emotion_count = [re.match(r'(\w+):', item).group(1) for item in emotion_copy]
 
+        print('')
+        print(emotion_count, 'emotion_count')
+        print('')
         ## find the top emotion
         top_emotion = "neutral"
         count = 0
@@ -137,6 +148,10 @@ class EmotionRecognition():
             if emotion_count.count(emotion) >= count:
                 count = emotion_count.count(emotion)
                 top_emotion = emotion
+
+        print('')
+        print(top_emotion, 'top_emotion')
+        print('')
 
         ## find average confidence of each frame of the top emotion
         confidence = []
@@ -146,6 +161,7 @@ class EmotionRecognition():
 
         ## catch no faces being seen in the array
         if not confidence:
+            print('no faces were seen in the frame?, l-164')
             return
 
         average_confidence = int(sum(confidence)/len(confidence))
