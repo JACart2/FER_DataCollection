@@ -76,7 +76,7 @@ class EmotionRecognition():
         # config cam stats
         init_params = sl.InitParameters()
         init_params.camera_resolution = sl.RESOLUTION.VGA 
-        init_params.camera_fps = 30
+        init_params.camera_fps = 15
         ## hard-coded value to the serial code of the back camera
         ## see the ENV var in the docker image 
         #init_params.set_from_serial_number(int(os.environ.get("SERIAL_NUMBER")))
@@ -89,7 +89,7 @@ class EmotionRecognition():
             exit(1)
 
         # Set video frame rate and display delay
-        fps = 30
+        fps = 15
         self.frame_delay = float(1 / fps)
 
         # Prepare sentiment labels and data storage
