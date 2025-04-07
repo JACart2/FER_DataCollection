@@ -128,16 +128,16 @@ class EmotionRecognition():
         emotion_copy = copy.deepcopy(self.emotion_data)
         self.emotion_data = []
 
-        print('')
-        print(len(emotion_copy), 'emotion_copy')
+        # print('')
+        # print(len(emotion_copy), 'emotion_copy')
 
-        print('')
-        print(len(self.emotion_data), 'emotion_data')
+        # print('')
+        # print(len(self.emotion_data), 'emotion_data')
 
         emotion_count = [re.match(r'(\w+):', item).group(1) for item in emotion_copy]
 
-        print('')
-        print(emotion_count, 'emotion_count')
+        # print('')
+        # print(emotion_count, 'emotion_count')
         ## find the top emotion
         top_emotion = "neutral"
         count = 0
@@ -198,7 +198,7 @@ class EmotionRecognition():
 
             if emotions:
                 self.emotion_data.append(emotions['Passenger 1:'])
-                #print(emotions, "PRIMARY thread")
+                print(emotions, "PRIMARY thread")
 
     def secondary_process_frames(self):
         """Secondary thread with queue to process frames from main.
@@ -222,7 +222,7 @@ class EmotionRecognition():
             
             if emotions:
                 self.emotion_data.append(emotions['Passenger 1:'])
-                #print(emotions, "SECONDARY thread")
+                print(emotions, "SECONDARY thread")
 
     def main(self):
         """Main callpoint of class. Begins threads, initializes queues, and periodically calls monitor to assess
