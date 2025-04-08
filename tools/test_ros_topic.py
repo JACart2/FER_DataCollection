@@ -23,6 +23,7 @@ class ZedImageSubscriber(Node):
         self.get_logger().info("Subscribed to ZED camera left image topic.")
 
     def image_callback(self, msg):
+        print('in callback')
         try:
             # Convert the ROS 2 image message to an OpenCV image
             cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
