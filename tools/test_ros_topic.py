@@ -12,6 +12,7 @@ class ZedImageSubscriber(Node):
         # Create a CvBridge object
         self.bridge = CvBridge()
 
+        print('creating sub')
         # Create a subscription to the left image topic
         self.subscription = self.create_subscription(
             Image,
@@ -19,6 +20,8 @@ class ZedImageSubscriber(Node):
             self.listener_callback,
             10
         )
+        print(self.subscription, 'sub obj')
+        print(dir(self.subscription), 'options')
         self.subscription  # prevent unused variable warning
 
     def listener_callback(self, msg):
