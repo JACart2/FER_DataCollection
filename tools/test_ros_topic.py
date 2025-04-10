@@ -16,7 +16,7 @@ class ZedImageSubscriber(Node):
         # Create a subscription to the left image topic
         self.subscription = self.create_subscription(
             Image,
-            '/camera/zed2i/left/image_raw',  # Topic name for ZED 2i left image
+            '/zed/zed_node/left_raw/image_raw_color',  # Topic name for ZED 2i left image
             self.listener_callback,
             10
         )
