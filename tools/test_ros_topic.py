@@ -31,9 +31,7 @@ class ZedImageSubscriber(Node):
             # Convert ROS Image message to OpenCV format
             cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
-            # Save the image to disk
-            cv2.imwrite("/tmp/zed_left_image.jpg", cv_image)
-            self.get_logger().info('Image saved to /tmp/zed_left_image.jpg')
+            cv2.imshow(cv_image)
 
         except Exception as e:
             self.get_logger().error(f'Error processing image: {e}')
