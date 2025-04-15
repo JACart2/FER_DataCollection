@@ -33,7 +33,9 @@ class ZedImageSubscriber(Node):
 
         try:
             # Convert ROS Image message to OpenCV format
-            cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgra8")
+            cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
+
+            print(f"shape: {cv_image.shape}, dtype: {cv_image.dtype}")
 
             no_alpha_image = cv2.cvtColor(cv_image, cv2.COLOR_BGRA2BGR)
             cv2.imshow("image", no_alpha_image)
