@@ -33,9 +33,10 @@ class ZedImageSubscriber(Node):
 
         try:
             # Convert ROS Image message to OpenCV format
-            cv_image = self.bridge.imgmsg_to_cv2(msg)
+            cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgra8")
 
-            cv2.imshow(cv_image)
+            no_alpha_image = cv2.cvtColor(cv_image, cv2.COLOR_BGRA2BGR)
+            cv2.imshow(no_alpha_image)
 
         except Exception as e:
             self.get_logger().error(f'Error processing image: {e}')
