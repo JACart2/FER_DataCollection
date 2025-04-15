@@ -27,7 +27,7 @@ class ZedImageSubscriber(Node):
     def listener_callback(self, msg):
         self.get_logger().info('Received an image')
         print(dir(msg))
-        1/0
+        print(dir(self.bridge), 'bridge')
 
         try:
             # Convert ROS Image message to OpenCV format
