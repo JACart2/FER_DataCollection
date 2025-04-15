@@ -29,9 +29,11 @@ class ZedImageSubscriber(Node):
         print(dir(msg))
         print(dir(self.bridge), 'bridge')
 
+        print(f"Encoding: {msg.encoding}")
+
         try:
             # Convert ROS Image message to OpenCV format
-            cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+            cv_image = self.bridge.imgmsg_to_cv2(msg)
 
             cv2.imshow(cv_image)
 
