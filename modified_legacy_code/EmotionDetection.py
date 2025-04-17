@@ -117,6 +117,7 @@ class EmotionRecognition(Node):
 
     def listener_callback(self, msg):
         # prevent unnecessary processing if ending script
+        print('received image!')
         if not self.alert:
             try:
                 rgba_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
