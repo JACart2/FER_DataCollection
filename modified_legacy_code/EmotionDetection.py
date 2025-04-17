@@ -3,26 +3,33 @@
 Author: John Rosario Cruz
 Based off "Facial-Recognition" by: Donghao Liu
 Based off "FaceRec_Emotion" by: Dominic Nguyen
-Version: 3/02/2025
+Version: 4/16/2025
 """
+## ROS2 packages
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+import cv2
+
+## Multi-Threading
 from threading import Thread
 import threading
 from queue import Queue
 
+## Facial Expression Recognition (see README)
 from fer import FER
-import pyzed.sl as sl
 
-from datetime import datetime
-import time
+## Utility
 import copy
 import re
-import os
 
+## Stubbed integrations for cart action
 #from openai_call import call_openai
 from ross_slowdown import call_ross
 
 
-class EmotionRecognition():
+class EmotionRecognition(Node):
     """
     Description
     ------------
@@ -73,34 +80,68 @@ class EmotionRecognition():
     """
     
     def __init__(self):
-        # config cam stats
-        init_params = sl.InitParameters()
-        init_params.camera_resolution = sl.RESOLUTION.VGA 
-        init_params.camera_fps = 15
-        ## hard-coded value to the serial code of the back camera
-        ## see the ENV var in the docker image 
-        # init_params.set_from_serial_number(int(os.environ.get("SERIAL_NUMBER")))
-        init_params.camera_image_flip = sl.FLIP_MODE.ON
+        ## configure camera setup
+        super().__init__('emotion_recognition_node')
+        self.bridge = CvBridge()
 
-        self.camera = sl.Camera()
+        # subscription
+        self.subscription = self.create_subscription(
+            Image,
+            '/zed_back/zed_node/left_raw/image_raw_color', 
+            self.listener_callback,
+            10
+        )
 
-        if self.camera.open(init_params) != sl.ERROR_CODE.SUCCESS:
-            print("Error opening ZED camera")
-            exit(1)
-
-        # Set video frame rate and display delay
+        # optional frame throttling
         fps = 15
         self.frame_delay = float(1 / fps)
 
-        # Prepare sentiment labels and data storage
+        # processing vars
+        self.primary = True
+        self.alert = False
+
+        # sentiment labels
         self.emotion_data = []
         self.detector = FER(mtcnn=True)
 
-        # Using a limited-size queue for asynchronous processing
+        # threading init
         self.frame_queue = Queue(maxsize=15)
         self.secondary_queue = Queue(maxsize=15)
         self.stop_event = threading.Event()
-        self.alert = False
+
+        # starting threads
+        self.thread_process = Thread(target=self.process_frames, daemon=True)
+        self.secondary_thread_process = Thread(target=self.secondary_process_frames, daemon=True)
+        self.thread_process.start()
+        self.secondary_thread_process.start()
+
+    def listener_callback(self, msg):
+        # prevent unnecessary processing if ending script
+        if not self.alert:
+            try:
+                rgba_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
+                rgb_image = cv2.cvtColor(rgba_image, cv2.COLOR_BGRA2BGR)
+
+
+                ## alternating between threads
+                if self.primary:
+                    if not self.frame_queue.full():
+                        self.frame_queue.put(rgb_image)
+                    else:
+                        self.secondary_queue.put(rgb_image)
+                else:
+                    if not self.secondary_queue.full():
+                        self.secondary_queue.put(rgb_image)
+                    else:
+                        self.frame_queue.put(rgb_image)
+
+                # monitor occassionally
+                if len(self.emotion_data) >= 30:
+                    self.monitor(rgb_image)
+
+
+            except Exception as e:
+                self.get_logger().error(f"Error processing image: {e}")
 
     def trigger_stop(self):
         """Trigger to HCI/Backend (or ROSS) for slowing down and stopping the cart.
@@ -128,16 +169,8 @@ class EmotionRecognition():
         emotion_copy = copy.deepcopy(self.emotion_data)
         self.emotion_data = []
 
-        # print('')
-        # print(len(emotion_copy), 'emotion_copy')
-
-        # print('')
-        # print(len(self.emotion_data), 'emotion_data')
-
         emotion_count = [re.match(r'(\w+):', item).group(1) for item in emotion_copy]
 
-        # print('')
-        # print(emotion_count, 'emotion_count')
         ## find the top emotion
         top_emotion = "neutral"
         count = 0
@@ -224,72 +257,26 @@ class EmotionRecognition():
                 self.emotion_data.append(emotions['Passenger 1:'])
                 print(emotions, "SECONDARY thread")
 
-    def main(self):
-        """Main callpoint of class. Begins threads, initializes queues, and periodically calls monitor to assess
-        the user.
-        """
-        # Start the thread that processes the frame
-        thread_process = Thread(target=self.process_frames, daemon=True)
-        secondary_thread_process = Thread(target=self.secondary_process_frames, daemon=True)
-        thread_process.start()
-        secondary_thread_process.start()
 
-        # main loop
-        times = [datetime.now().timestamp()]
-        primary = True
+def main():
+    """Main callpoint of the class.
+    """
+    rclpy.init()
+    emotion_node = EmotionRecognition()
 
-        try:
-            frame_count = 0
-            while not self.alert:
-                # Grab a frame
-                if self.camera.grab() == sl.ERROR_CODE.SUCCESS:
-                    # Retrieve the left image
-                    image = sl.Mat()
-                    self.camera.retrieve_image(image, sl.VIEW.LEFT)
-
-                    # Convert to numpy array for easier handling in the test function
-                    frame = image.get_data()[:, :, :3]
-
-                    ## alternating between threads
-                    if primary:
-                        if not self.frame_queue.full():
-                            self.frame_queue.put(frame)
-                        else:
-                            self.secondary_queue.put(frame)
-                    else:
-                        if not self.secondary_queue.full():
-                            self.secondary_queue.put(frame)
-                        else:
-                            self.frame_queue.put(frame)
-                    
-                    primary = not primary
-
-                # monitor every 30 frames (3-4 seconds)
-                if len(self.emotion_data) >= 30:
-                    frame_count = 0
-                    self.monitor(frame)
-                else:
-                    frame_count += 1
-
-                time.sleep(self.frame_delay)
-
-        except KeyboardInterrupt:
-            ## catch ctrl-c to close threads
-            pass
-
-        times.append(datetime.now().timestamp())
-
-        # Notification thread ends
-        self.stop_event.set()
-
-        # Wait for thread to end
-        thread_process.join()
-        secondary_thread_process.join()
-
-        # Clean and save data
-        self.camera.close()
+    try:
+        rclpy.spin(emotion_node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        ## ending threads
+        emotion_node.alert = True
+        emotion_node.stop_event.set()
+        emotion_node.thread_process.join()
+        emotion_node.secondary_thread_process.join()
+        emotion_node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':
-    EmotionRecognitionObject = EmotionRecognition()
-    EmotionRecognitionObject.main()
+    main()
