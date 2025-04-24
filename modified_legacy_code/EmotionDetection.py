@@ -3,7 +3,7 @@
 Author: John Rosario Cruz
 Based off "Facial-Recognition" by: Donghao Liu
 Based off "FaceRec_Emotion" by: Dominic Nguyen
-Version: 4/16/2025
+Version: 4/24/2025
 """
 ## ROS2 packages
 import rclpy
@@ -26,7 +26,6 @@ import re
 
 ## Stubbed integrations for cart action
 #from openai_call import call_openai
-from ross_slowdown import call_ross
 
 
 class EmotionRecognition(Node):
@@ -38,11 +37,18 @@ class EmotionRecognition(Node):
     
     Attributes
     ----------
-        camera (obj): The object that interacts with the ZED camera.
+        bridge (obj): Used for converting ROS2 Image objects to an image matrix.
 
-        frame_delay (float): The time in seconds that the main loop will wait to keep time with ZED FPS.
+        subscription (obj): The subscription to the ROS2 topic for images. 
+            Triggers listern_callback() on image receipt.
 
-        emotion_data (list): Stores emotion data for up to 30 frames.
+        frame_delay (float): The OPTIONAL time in seconds that 
+            the main loop will wait to keep time with ZED FPS.
+
+        primary (boolean): Determines which queue to use for processing. 
+            This alternates between which queue/thread is given image data.
+
+        emotion_data (list): Stores emotion data for frames.
 
         detector (obj): The FER detector. Used to detect emotion & faces in frames.
 
@@ -50,14 +56,23 @@ class EmotionRecognition(Node):
         
         secondary_queue (queue): The second queue of frames coming from the ZED camera.
 
-        stop_event (boolean): Forces the threads to begin termination.
+        stop_event (boolean): Forces the threads to begin termination. 
+            Forces listener_callback() to stop processing.
 
-        alert (boolean): Forces the main loop to terminate (starting the process for killing threads)
+        thread_process (thread): The primary thread for procesing. This method
+            uses process_frames().
+
+        secondary_thread_process (thread): The secondary thread for processing.
+            This method uses secondary_process_frames().
 
     Methods:
     -------
+        listener_callback()
+            Triggered on image receipt from ROS2 topic. Populates thread queues and periodically
+            calls monitor() based on self.emotion_data size.
+
         trigger_stop()
-            Trigger to HCI/Backend (or ROSS) for slowing down and stopping the cart.
+            Stubbed out integration with ROS2 publish to stop the cart (or slowdown?)
 
         trigger_admin_alert()
             Trigger to HCI/Backend for alerting the admin to check on a passenger/cart.
@@ -73,10 +88,6 @@ class EmotionRecognition(Node):
 
         secondary_process_frames()
             Secondary thread with queue to process frames from main.
-        
-        main()
-            Main callpoint of class. Begins threads, initializes queues, and periodically calls monitor to assess the user.
-    
     """
     
     def __init__(self):
@@ -98,7 +109,6 @@ class EmotionRecognition(Node):
 
         # processing vars
         self.primary = True
-        self.alert = False
 
         # sentiment labels
         self.emotion_data = []
@@ -116,9 +126,14 @@ class EmotionRecognition(Node):
         self.secondary_thread_process.start()
 
     def listener_callback(self, msg):
+        """Callback method that handles the incoming images from the ROS2 topic.
+
+        Args:
+            msg (obj): Image object from ROS2 topic.
+        """
         # prevent unnecessary processing if ending script
         print('received image!')
-        if not self.alert:
+        if not self.stop_event.is_set():
             try:
                 rgba_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
                 rgb_image = cv2.cvtColor(rgba_image, cv2.COLOR_BGRA2BGR)
@@ -145,9 +160,8 @@ class EmotionRecognition(Node):
                 self.get_logger().error(f"Error processing image: {e}")
 
     def trigger_stop(self):
-        """Trigger to HCI/Backend (or ROSS) for slowing down and stopping the cart.
+        """Stubbed out integration with ROS2 publish to stop the cart (or slowdown?).
         """
-        call_ross()
         print('Stop-Process: Called')
 
     def trigger_admin_alert(self):
@@ -202,6 +216,7 @@ class EmotionRecognition(Node):
         if average_confidence >= 65:
             if top_emotion in ["fear", "sad", "surprise", "angry", "disgust"]:
                 #response = call_openai(frame)
+                ## remove this below once openai is integrated
                 response = 'U'
                 self.trigger_user_prompt()
                 if response in ['U', 'I']:
@@ -270,8 +285,7 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
-        ## ending threads
-        emotion_node.alert = True
+        ## ending threads, ending listener_callback() functionality
         emotion_node.stop_event.set()
         emotion_node.thread_process.join()
         emotion_node.secondary_thread_process.join()
