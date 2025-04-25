@@ -23,6 +23,7 @@ from fer import FER
 ## Utility
 import copy
 import re
+import time
 
 ## Stubbed integrations for cart action
 #from openai_call import call_openai
@@ -98,7 +99,7 @@ class EmotionRecognition(Node):
         # subscription
         self.subscription = self.create_subscription(
             Image,
-            '/zed_back/zed_node/left_raw/image_raw_color', 
+            '/zed_rear/zed_node/left_raw/image_raw_color', 
             self.listener_callback,
             10
         )
@@ -277,6 +278,8 @@ class EmotionRecognition(Node):
 def main():
     """Main callpoint of the class.
     """
+    ## waiting for backend service to spin up their topic
+    time.sleep(20)
     rclpy.init()
     emotion_node = EmotionRecognition()
 
