@@ -2,7 +2,7 @@
 
 # FER_DataCollection
 Code repo for developing facial expression recognition for the AV (cart).
- 
+
 # Required Dependencies
 - [FER](https://pypi.org/project/fer/): Primary package for identifying faces and emotions.
 - [TensorFlow](https://pypi.org/project/tensorflow/): Dependency for FER.
