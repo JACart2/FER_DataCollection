@@ -1,0 +1,8 @@
+## Some installations during initial config
+
+## for ZED cam
+pip install cython numpy opencv-python pyopengl
+
+## Facial expression recognition package
+pip install fer
+pip install tensorflow ffmpeg moviepy
