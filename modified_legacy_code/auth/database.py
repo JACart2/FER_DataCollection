@@ -17,7 +17,6 @@ def connect_to_database():
 
 # Prints the connection to the database if successful or not
 print(connect_to_database())
-=======
 load_dotenv()
 
 password  = os.environ.get("MY_ENV_VAR")
