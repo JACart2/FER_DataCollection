@@ -2,7 +2,6 @@ import mysql.connector
 import os
 from dotenv import load_dotenv
 
-
 load_dotenv()
 db_password  = os.environ.get("MY_ENV_VAR") # This is you local .env file database password
 db_host = os.environ.get("MY_ENV_HOST") # This is your local .env file database host name
@@ -17,19 +16,3 @@ def connect_to_database():
 
 # Prints the connection to the database if successful or not
 print(connect_to_database())
-load_dotenv()
-
-password  = os.environ.get("MY_ENV_VAR")
-
-conn = mysql.connector.connect (
-    host="localhost",
-    user="root",
-    passwd = password 
-)
-
-
-
-print(conn)
-
-# conn.close()
-
