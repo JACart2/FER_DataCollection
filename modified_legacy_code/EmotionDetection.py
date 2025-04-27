@@ -35,7 +35,7 @@ class EmotionRecognition(Node):
     ------------
         Script for monitoring passenger emotions through a ZED camera. Also includes 
         trigger methods for causing actions in the cart if needed.
-    
+
     Attributes
     ----------
         bridge (obj): Used for converting ROS2 Image objects to an image matrix.
@@ -54,13 +54,13 @@ class EmotionRecognition(Node):
         detector (obj): The FER detector. Used to detect emotion & faces in frames.
 
         frame_queue (queue): The first queue of frames coming from the ZED camera.
-        
+
         secondary_queue (queue): The second queue of frames coming from the ZED camera.
 
-        stop_event (boolean): Forces the threads to begin termination. 
+        stop_event (boolean): Forces the threads to begin termination.
             Forces listener_callback() to stop processing.
 
-        thread_process (thread): The primary thread for procesing. This method
+        thread_process (thread): The primary thread for processing. This method
             uses process_frames().
 
         secondary_thread_process (thread): The secondary thread for processing.
@@ -90,7 +90,7 @@ class EmotionRecognition(Node):
         secondary_process_frames()
             Secondary thread with queue to process frames from main.
     """
-    
+
     def __init__(self):
         ## configure camera setup
         super().__init__('emotion_recognition_node')
@@ -139,7 +139,6 @@ class EmotionRecognition(Node):
                 rgba_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
                 rgb_image = cv2.cvtColor(rgba_image, cv2.COLOR_BGRA2BGR)
 
-
                 ## alternating between threads
                 if self.primary:
                     if not self.frame_queue.full():
@@ -155,7 +154,6 @@ class EmotionRecognition(Node):
                 # monitor occassionally
                 if len(self.emotion_data) >= 30:
                     self.monitor(rgb_image)
-
 
             except Exception as e:
                 self.get_logger().error(f"Error processing image: {e}")
@@ -269,7 +267,7 @@ class EmotionRecognition(Node):
                         name = emotion
 
                 emotions[f"Passenger {i + 1}:"] = f"{name}: {int(confidence * 100)}%"
-            
+
             if emotions:
                 self.emotion_data.append(emotions['Passenger 1:'])
                 print(emotions, "SECONDARY thread")
