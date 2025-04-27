@@ -138,7 +138,7 @@ def encode_face():
     
     # Threshold for how many times a user has to blink before
     # having access to scan their face
-    blink_threshold = 10
+    blink_threshold = 3
 
     # Creates or destroys boxes around the eyes
     draw_eye_box = True
