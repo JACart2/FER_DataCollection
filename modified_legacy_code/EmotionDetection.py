@@ -148,6 +148,9 @@ class EmotionRecognition(Node):
                 rgba_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
                 rgb_image = cv2.cvtColor(rgba_image, cv2.COLOR_BGRA2BGR)
 
+                ## manual image flip until ROS2 topic does this
+                rgb_image = cv2.flip(rgb_image, 0)
+
                 ## alternating between threads
                 if self.primary:
                     if not self.frame_queue.full():
