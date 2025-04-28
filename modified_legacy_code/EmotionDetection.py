@@ -107,6 +107,7 @@ class EmotionRecognition(Node):
         # optional frame throttling
         fps = 15
         self.frame_delay = float(1 / fps)
+        self.current_time = 0.0
 
         # processing vars
         self.primary = True
@@ -134,6 +135,14 @@ class EmotionRecognition(Node):
         """
         # prevent unnecessary processing if ending script
         print('received image!')
+
+        # force image throttle
+        current_time = time.time()
+        if current_time - self.current_time < self.frame_delay:
+            return
+        else:
+            self.current_time = current_time
+
         if not self.stop_event.is_set():
             try:
                 rgba_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
@@ -150,6 +159,8 @@ class EmotionRecognition(Node):
                         self.secondary_queue.put(rgb_image)
                     else:
                         self.frame_queue.put(rgb_image)
+
+                self.primary = not self.primary
 
                 # monitor occassionally
                 if len(self.emotion_data) >= 30:
