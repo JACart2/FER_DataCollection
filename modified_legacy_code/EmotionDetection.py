@@ -99,7 +99,7 @@ class EmotionRecognition(Node):
         # subscription
         self.subscription = self.create_subscription(
             Image,
-            '/zed_rear/zed_node/left_raw/image_raw_color', 
+            '/zed_rear/zed_node_1/left_raw/image_raw_color', 
             self.listener_callback,
             10
         )
@@ -149,7 +149,7 @@ class EmotionRecognition(Node):
                 rgb_image = cv2.cvtColor(rgba_image, cv2.COLOR_BGRA2BGR)
 
                 ## manual image flip until ROS2 topic does this
-                rgb_image = cv2.flip(rgb_image, 0)
+                #rgb_image = cv2.flip(rgb_image, 0)
 
                 ## alternating between threads
                 if self.primary:
