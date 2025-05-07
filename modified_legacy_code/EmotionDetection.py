@@ -226,7 +226,7 @@ class EmotionRecognition(Node):
         print(top_emotion)
         print(average_confidence)
         ## lowering this number will increase chatgpt calls
-        if average_confidence >= 65:
+        if average_confidence >= 50:
             if top_emotion in ["fear", "sad", "surprise", "angry", "disgust"]:
                 #response = call_openai(frame)
                 ## remove this below once openai is integrated
