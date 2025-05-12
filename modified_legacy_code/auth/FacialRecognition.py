@@ -32,7 +32,7 @@ def extract_face_embeddings(frame):
 
     # Uses deepface/opencv library to detect faces.
     # Uses facenet model.
-    result = DeepFace.represent(img_path=frame, model_name='Facenet')
+    result = DeepFace.represent(img_path=frame, model_name='Facenet', enforce_detection=False)
     face_embeddings = result[0]['embedding'] if isinstance(result, list) else result['embedding']
     return face_embeddings
 
@@ -138,7 +138,7 @@ def encode_face():
     
     # Threshold for how many times a user has to blink before
     # having access to scan their face
-    blink_threshold = 3
+    blink_threshold = 5
 
     # Creates or destroys boxes around the eyes
     draw_eye_box = True
@@ -146,9 +146,12 @@ def encode_face():
     while True:
         # Capture frame from the camera
         ret, frame = camera.read() 
+
+
+        flip = cv2.flip(frame, flipCode=-1)
+        gray = cv2.cvtColor(flip, cv2.COLOR_BGR2GRAY)
+        gray = cv2.equalizeHist(gray)
         
-        # Convert frame to grayscale for face detection
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         
         # Perform face detection
         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
@@ -165,17 +168,16 @@ def encode_face():
             roi_color = frame[y:y+h, x:x+w]
 
             # Creates a copy of the frame 
-            frame_copy_test = frame.copy()
-            cv2.putText(frame_copy_test, "Look into the right camera and blink 10 times", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+            # frame_copy_test = frame.copy()
+            # cv2.putText(frame_copy_test, "Look into the right camera and blink 10 times", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
             
             # Perform Eye detection
             eyes = eye_cascade.detectMultiScale(roi_gray, scaleFactor=1.1, minNeighbors=5, minSize=(10, 10), maxSize=(60, 60))
             
             # Loop through eyes to draw boxes around them
             for (ex, ey, ew, eh) in eyes:
-                if draw_eye_box:
-                    cv2.rectangle(frame, (x + ex, y + ey), (x + ex + ew, y + ey + eh), (0, 255, 0), 2)
-            
+                cv2.rectangle(flip, (x + ex, y + ey), (x + ex + ew, y + ey + eh), (0, 225, 0), 2)
+
             # Checks to see if there are eyes in current video frame
             if len(eyes) > 0:
                 eyes_detected = True
@@ -197,12 +199,12 @@ def encode_face():
                 draw_eye_box = False
                 if distance > tolerance:
                     # If the face is too far from the box, draw a red box and prompt to move closer
-                    draw_bounding_box(frame, box_x, box_y, box_width, box_height, (0, 0, 255))
-                    cv2.putText(frame, 'Move closer', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                    draw_bounding_box(flip, box_x, box_y, box_width, box_height, (0, 0, 255))
+                    cv2.putText(flip, 'Move closer', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
                 else:
                     # If the face is within the box, draw a green box and prompt to capture
-                    draw_bounding_box(frame, box_x, box_y, box_width, box_height, (0, 255, 0))
-                    cv2.putText(frame, 'Face detected! Press "c" to capture', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                    draw_bounding_box(flip, box_x, box_y, box_width, box_height, (0, 255, 0))
+                    cv2.putText(flip, 'Face detected! Press "c" to capture', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
                     
                     # Wait for 'c' key to be pressed to capture face
                     if cv2.waitKey(1) & 0xFF == ord('c'):
@@ -277,8 +279,8 @@ def encode_face():
                         root.mainloop()
                         return  
         
-        # Display the frame with detected face or prompt
-        cv2.imshow("Capture", frame)  
+        # Display the frame with detected face or prompt  
+        cv2.imshow("Capture", flip)  
         
         # Check for key press events
         key = cv2.waitKey(1)
@@ -331,7 +333,7 @@ def recognize_face():
 
     # Threshold for how many times a user has to blink before
     # having access to scan their face
-    blink_threshold = 10
+    blink_threshold = 5
 
     # Creates or destroys boxes around the eyes
     draw_eye_box = True
@@ -339,7 +341,10 @@ def recognize_face():
     while True:
         ret, frame = camera.read()  # Capture frame from the camera
 
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        flip = cv2.flip(frame, flipCode=-1)
+        gray = cv2.cvtColor(flip, cv2.COLOR_BGR2GRAY)
+        gray = cv2.equalizeHist(gray)
 
         # Perform face detection
         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
@@ -355,19 +360,17 @@ def recognize_face():
             roi_gray = gray[y:y+h, x:x+w]
             roi_color = frame[y:y+h, x:x+w]
 
-            # Creates a copy of the frame 
-            frame_copy = frame.copy()
+            # # Creates a copy of the frame 
+            # frame_copy = frame.copy()
 
-            cv2.putText(frame_copy, "Look into the right camera and blink 10 times", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+            # cv2.putText(frame_copy, "Look into the right camera and blink 10 times", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
             
             # Perform eye detection
             eyes = eye_cascade.detectMultiScale(roi_gray, scaleFactor=1.1, minNeighbors=5, minSize=(10, 10), maxSize=(60, 60))
             
             # Loop through eyes to draw boxes around them
             for (ex, ey, ew, eh) in eyes:
-                if draw_eye_box:
-                    cv2.rectangle(frame, (x + ex, y + ey), (x + ex + ew, y + ey + eh), (0, 255, 0), 2)
-            
+                cv2.rectangle(flip, (x + ex, y + ey), (x + ex + ew, y + ey + eh), (0, 255, 0), 2)
             # Checks to see if there are eyes in current video frame
             if len(eyes) > 0:
                 eyes_detected = True
@@ -387,12 +390,12 @@ def recognize_face():
 
                 if distance > tolerance:
                     # If the face is too far from the box, draw a red box and prompt to move closer
-                    draw_bounding_box(frame, box_x, box_y, box_width, box_height, (0, 0, 255))
-                    cv2.putText(frame, 'Move closer', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                    draw_bounding_box(flip, box_x, box_y, box_width, box_height, (0, 0, 255))
+                    cv2.putText(flip, 'Move closer', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
                 else:
                     # If the face is within the box, draw a green box and prompt to recognize
-                    draw_bounding_box(frame, box_x, box_y, box_width, box_height, (0, 255, 0))
-                    cv2.putText(frame, 'Face detected! Press "r" to recognize', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                    draw_bounding_box(flip, box_x, box_y, box_width, box_height, (0, 255, 0))
+                    cv2.putText(flip, 'Face detected! Press "r" to recognize', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
                     if cv2.waitKey(1) & 0xFF == ord('r'):
                         # Perform recognition only once per press
@@ -400,7 +403,7 @@ def recognize_face():
                             recognizing = True
 
                             # Extract face embeddings from the captured frame
-                            result = DeepFace.represent(img_path=frame, model_name='Facenet', enforce_detection=True)
+                            result = DeepFace.represent(img_path=flip, model_name='Facenet', enforce_detection=False)
                             face_embeddings = result[0]['embedding'] if isinstance(result, list) else result['embedding']
 
                             cursor = db_connection.cursor()
@@ -445,7 +448,7 @@ def recognize_face():
                             return
 
         # Display the frame with face detection or recognition prompts
-        cv2.imshow("Recognition", frame)  
+        cv2.imshow("Recognition", flip)  
 
         # Check for key press events
         key = cv2.waitKey(1)
