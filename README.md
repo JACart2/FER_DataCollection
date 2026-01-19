@@ -1,4 +1,4 @@
-4/24/2025
+1/19/2026
 
 # FER_DataCollection
 Repo for code relating to facial expression recognition. Primary function is in ./modified_legacy_code/EmotionDetection.py for recognizing negative emotions and identifying incapacitation.
