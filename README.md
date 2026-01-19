@@ -8,8 +8,7 @@ Listed below is the link to the private Dockerhub repo that stores the project i
 - [DockerHub](https://hub.docker.com/repository/docker/jmujacart/jacart_images/general) Storing project images.
 
 # Required Dependencies
-Disclaimer, the Dockerfile for this package contains all these things. What's listed below is mostly the pip
-install requirements. Things like CUDA or ROS2 are taken care of in the Dockerfile.
+Disclaimer, the Dockerfile for this package contains all these things. What's listed below is mostly the pip install requirements. Things like CUDA or ROS2 are taken care of in the Dockerfile.
 - [FER](https://pypi.org/project/fer/): Primary package for identifying faces and emotions.
 - [TensorFlow](https://pypi.org/project/tensorflow/): Dependency for FER.
 - [ffmpeg](https://pypi.org/project/ffmpeg/): Dependency for FER.
@@ -19,12 +18,12 @@ install requirements. Things like CUDA or ROS2 are taken care of in the Dockerfi
 - [Argon2](https://pypi.org/project/argon2-cffi/): Used for hashing in Authentication scripts.
 - [DotEnv](https://pypi.org/project/python-dotenv/): Used for loading environment variables. Primarily helps in development.
 
-# ./legacy_code
-This is original code from Dominic Nguyen from Spring 24'. This is not used for the cart, it is just the basis that everything else was developed on.
+# ./legacy_scripts
+This is original code from Dominic Nguyen from Spring 24', and unintegrated work from Chayse and Nick from Spring 25' for biometric (face) auth and appendage ID to keep passengers within safe bounds.
 
-# ./modified_legacy_code
-EmotionDetection, FacialRecognition (Auth), PostureRecognition (OoB & skeleton tracking)
+# ./active_scripts
+EmotionDetection (entrypoint of container).
 openai_call is the point that EmotionDetection & Posture Recognition use when an alert is reached. They send the frame and a prompt to ChatGPT for a final verdict on an action.
 
 # ./tools
-Spare files for testing. These can be ignored unless you need the functionality of one of them. 
+Spare files for testing. These can be ignored in prod but maybe useful with testing/dev.
